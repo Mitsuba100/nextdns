@@ -86,22 +86,22 @@
     <p>Generate a custom Apple configuration profile bypassable on <b>GLAP-Schule</b> Wi-Fi with NextDNS Root CA preloaded.</p>
     
     <label for="configId">NextDNS Configuration ID</label>
-    <input type="text" id="configId" value="2662c9" placeholder="e.g. 2662c9">
+    <input type="text" id="configId" value="">
 
     <label for="deviceName">Device Name</label>
-    <input type="text" id="deviceName" value="iPad" placeholder="e.g. MyiPad">
+    <input type="text" id="deviceName" value="">
 
     <label for="ipv4_1">IPv4 Primary Address</label>
-    <input type="text" id="ipv4_1" value="45.90.28.171">
+    <input type="text" id="ipv4_1" value="">
 
     <label for="ipv4_2">IPv4 Secondary Address</label>
-    <input type="text" id="ipv4_2" value="45.90.30.171">
+    <input type="text" id="ipv4_2" value="">
 
     <label for="ipv6_1">IPv6 Primary Address</label>
-    <input type="text" id="ipv6_1" value="2a07:a8c0::26:62c9">
+    <input type="text" id="ipv6_1" value="">
 
     <label for="ipv6_2">IPv6 Secondary Address</label>
-    <input type="text" id="ipv6_2" value="2a07:a8c1::26:62c9">
+    <input type="text" id="ipv6_2" value="">
 
     <button onclick="generateProfile()">Download Profile</button>
 </div>
@@ -116,11 +116,22 @@ function generateUUID() {
 
 function generateProfile() {
     const configId = document.getElementById('configId').value.trim();
-    const deviceName = encodeURIComponent(document.getElementById('deviceName').value.trim());
+    const deviceNameRaw = document.getElementById('deviceName').value.trim();
+    const deviceName = encodeURIComponent(deviceNameRaw || "iPad");
     const ipv4_1 = document.getElementById('ipv4_1').value.trim();
     const ipv4_2 = document.getElementById('ipv4_2').value.trim();
     const ipv6_1 = document.getElementById('ipv6_1').value.trim();
     const ipv6_2 = document.getElementById('ipv6_2').value.trim();
+
+    // Field verification to prevent compiling broken files
+    if (!configId) {
+        alert("Please enter a Configuration ID.");
+        return;
+    }
+    if (!ipv4_1 || !ipv4_2) {
+        alert("Please enter both IPv4 Addresses.");
+        return;
+    }
 
     const dnsUuid = generateUUID();
     const certUuid = generateUUID();
@@ -153,8 +164,8 @@ function generateProfile() {
 				<array>
 					<string>${ipv4_1}</string>
 					<string>${ipv4_2}</string>
-					<string>${ipv6_1}</string>
-					<string>${ipv6_2}</string>
+					${ipv6_1 ? `<string>${ipv6_1}</string>` : ''}
+					${ipv6_2 ? `<string>${ipv6_2}</string>` : ''}
 				</array>
 				<key>OnDemandRules</key>
 				<array>
