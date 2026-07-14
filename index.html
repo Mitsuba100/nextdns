@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextDNS Smart Profile Generator</title>
+    <title>NextDNS Multi-Profile Installer</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -69,31 +69,41 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
         }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
         button { 
-            width: 100%; 
+            flex: 1;
             background: #0071e3; 
             color: white; 
             border: none; 
             padding: 14px; 
             border-radius: 8px; 
-            font-size: 16px; 
+            font-size: 14px; 
             font-weight: 600; 
-            margin-top: 24px; 
             cursor: pointer; 
             transition: background 0.2s ease;
         }
         button:hover { 
             background: #0077ed; 
         }
+        button.secondary {
+            background: #424245;
+        }
+        button.secondary:hover {
+            background: #515154;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Smart Profile Builder</h2>
-    <p>Forces static DNS on <b>GLAP-Schule</b> Wi-Fi, and automatically uses NextDNS DoH on all other networks.</p>
+    <h2>Multi-Profile Setup</h2>
+    <p>Install both profiles. iOS will automatically prioritize Profile 1 on school Wi-Fi and Profile 2 everywhere else.</p>
     
-    <div class="section-title">1. NextDNS DoH (For Non-School Networks)</div>
+    <div class="section-title">1. NextDNS Setup (General Networks)</div>
 
     <label for="configId">NextDNS Configuration ID</label>
     <input type="text" id="configId" value="">
@@ -113,7 +123,7 @@
     <label for="dohIpv6_2">DoH IPv6 Secondary Address</label>
     <input type="text" id="dohIpv6_2" value="">
 
-    <div class="section-title">2. GLAP-Schule Wi-Fi (Bypass)</div>
+    <div class="section-title">2. GLAP-Schule Setup (School Network)</div>
 
     <label for="schoolIpv4_1">Forced IPv4 DNS 1</label>
     <input type="text" id="schoolIpv4_1" value="">
@@ -121,7 +131,10 @@
     <label for="schoolIpv4_2">Forced IPv4 DNS 2</label>
     <input type="text" id="schoolIpv4_2" value="">
 
-    <button onclick="generateProfile()">Download Profile</button>
+    <div class="btn-group">
+        <button class="secondary" onclick="generateSchoolWifiProfile()">Download Profile 1<br>(School Wi-Fi)</button>
+        <button onclick="generateDohProfile()">Download Profile 2<br>(Global NextDNS)</button>
+    </div>
 </div>
 
 <script>
@@ -132,35 +145,93 @@ function generateUUID() {
     });
 }
 
-function generateProfile() {
+// PROFILE 1: School Wi-Fi Configuration
+function generateSchoolWifiProfile() {
+    const schoolIpv4_1 = document.getElementById('schoolIpv4_1').value.trim();
+    const schoolIpv4_2 = document.getElementById('schoolIpv4_2').value.trim();
+
+    if (!schoolIpv4_1 || !schoolIpv4_2) {
+        alert("Please fill in the GLAP-Schule Forced DNS addresses first.");
+        return;
+    }
+
+    const schoolWifiUuid = generateUUID();
+    const mainUuid = generateUUID();
+
+    const profileXml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadType</key>
+			<string>com.apple.WiFi</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadUUID</key>
+			<string>${schoolWifiUuid}</string>
+			<key>PayloadIdentifier</key>
+			<string>net.stuple.profile.wifischool</string>
+			<key>PayloadDisplayName</key>
+			<string>GLAP-Schule Wi-Fi Settings</string>
+			<key>SSID_STR</key>
+			<string>GLAP-Schule</string>
+			<key>HIDDEN_NETWORK</key>
+			<false/>
+			<key>AutoJoin</key>
+			<true/>
+			<key>EncryptionType</key>
+			<string>WPA</string>
+			<key>CaptiveBypass</key>
+			<false/>
+			<key>DNSNameservers</key>
+			<array>
+				<string>${schoolIpv4_1}</string>
+				<string>${schoolIpv4_2}</string>
+			</array>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Configures GLAP-Schule Wi-Fi with forced static IPv4 DNS.</string>
+	<key>PayloadDisplayName</key>
+	<string>Stuple 1 - School Wi-Fi</string>
+	<key>PayloadIdentifier</key>
+	<string>net.stuple.profile.schoolwifi</string>
+	<key>PayloadOrganization</key>
+	<string>Stuple</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>PayloadScope</key>
+	<string>System</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>${mainUuid}</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>`;
+
+    downloadBlob(profileXml, "School-WiFi-Config.mobileconfig");
+}
+
+// PROFILE 2: Global DNS (DoH) Config
+function generateDohProfile() {
     const configId = document.getElementById('configId').value.trim();
     const deviceNameRaw = document.getElementById('deviceName').value.trim();
     const deviceName = encodeURIComponent(deviceNameRaw || "iPad");
-    
     const dohIpv4_1 = document.getElementById('dohIpv4_1').value.trim();
     const dohIpv4_2 = document.getElementById('dohIpv4_2').value.trim();
     const dohIpv6_1 = document.getElementById('dohIpv6_1').value.trim();
     const dohIpv6_2 = document.getElementById('dohIpv6_2').value.trim();
 
-    const schoolIpv4_1 = document.getElementById('schoolIpv4_1').value.trim();
-    const schoolIpv4_2 = document.getElementById('schoolIpv4_2').value.trim();
-
-    // Validation
-    if (!configId) {
-        alert("Please enter your NextDNS Configuration ID.");
-        return;
-    }
-    if (!dohIpv4_1 || !dohIpv4_2) {
-        alert("Please enter both DoH IPv4 Addresses.");
-        return;
-    }
-    if (!schoolIpv4_1 || !schoolIpv4_2) {
-        alert("Please enter both school bypass IPv4 addresses.");
+    if (!configId || !dohIpv4_1 || !dohIpv4_2) {
+        alert("Please fill in the NextDNS ID and DoH IPv4 details.");
         return;
     }
 
     const dnsUuid = generateUUID();
-    const schoolWifiUuid = generateUUID();
     const mainUuid = generateUUID();
 
     const profileXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -210,41 +281,13 @@ function generateProfile() {
 				</array>
 			</dict>
 		</dict>
-
-		<dict>
-			<key>PayloadType</key>
-			<string>com.apple.WiFi</string>
-			<key>PayloadVersion</key>
-			<integer>1</integer>
-			<key>PayloadUUID</key>
-			<string>${schoolWifiUuid}</string>
-			<key>PayloadIdentifier</key>
-			<string>net.stuple.profile.wifischool</string>
-			<key>PayloadDisplayName</key>
-			<string>GLAP-Schule Wi-Fi</string>
-			<key>SSID_STR</key>
-			<string>GLAP-Schule</string>
-			<key>HIDDEN_NETWORK</key>
-			<false/>
-			<key>AutoJoin</key>
-			<true/>
-			<key>EncryptionType</key>
-			<string>WPA</string>
-			<key>CaptiveBypass</key>
-			<false/>
-			<key>DNSNameservers</key>
-			<array>
-				<string>${schoolIpv4_1}</string>
-				<string>${schoolIpv4_2}</string>
-			</array>
-		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>NextDNS dynamic network routing profile.</string>
+	<string>Configures global NextDNS DoH on all networks (except school).</string>
 	<key>PayloadDisplayName</key>
-	<string>Stuple Smart DNS Config</string>
+	<string>Stuple 2 - Global NextDNS</string>
 	<key>PayloadIdentifier</key>
-	<string>net.stuple.profile</string>
+	<string>net.stuple.profile.globaldns</string>
 	<key>PayloadOrganization</key>
 	<string>Stuple</string>
 	<key>PayloadRemovalDisallowed</key>
@@ -260,10 +303,14 @@ function generateProfile() {
 </dict>
 </plist>`;
 
-    const blob = new Blob([profileXml], { type: 'application/x-apple-aspen-config' });
+    downloadBlob(profileXml, "Global-NextDNS.mobileconfig");
+}
+
+function downloadBlob(content, filename) {
+    const blob = new Blob([content], { type: 'application/x-apple-aspen-config' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `SmartDNS-Config.mobileconfig`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
