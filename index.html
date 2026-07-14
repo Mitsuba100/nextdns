@@ -83,7 +83,7 @@
 
 <div class="card">
     <h2>NextDNS Profile Builder</h2>
-    <p>Generate a custom Apple configuration profile bypassable on <b>GLAP-Schule</b> Wi-Fi with NextDNS Root CA preloaded.</p>
+    <p>Generate a custom Apple configuration profile bypassable on <b>GLAP-Schule</b> Wi-Fi.</p>
     
     <label for="configId">NextDNS Configuration ID</label>
     <input type="text" id="configId" value="">
@@ -133,7 +133,6 @@ function generateProfile() {
     }
 
     const dnsUuid = generateUUID();
-    const certUuid = generateUUID();
     const mainUuid = generateUUID();
 
     const profileXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -183,37 +182,9 @@ function generateProfile() {
 				</array>
 			</dict>
 		</dict>
-		<dict>
-			<key>PayloadType</key>
-			<string>com.apple.security.root</string>
-			<key>PayloadVersion</key>
-			<integer>1</integer>
-			<key>PayloadUUID</key>
-			<string>${certUuid}</string>
-			<key>PayloadIdentifier</key>
-			<string>net.stuple.profile.rootca</string>
-			<key>PayloadDisplayName</key>
-			<string>NextDNS Root CA</string>
-			<key>PayloadCertificateFileName</key>
-			<string>NextDNSRootCA.crt</string>
-			<key>PayloadContent</key>
-			<data>
-			MIIChjCCAiWgAwIBAgIQY9Fs3R0I3s7B8F9A/762izAKBggqhkjOPQQDAjAl
-			MSUwIwYDVQQDExxOZXh0RE5TIFJvb3QgQ0EgKDIwMjAtMDUtMDYpMB4XDTIw
-			MDUwNjAwMDAwMFoXDTQwMDUwNjAwMDAwMFowJTElMCMGA1UEAxMcTmV4dERO
-			UyBSb290IENBICgyMDIwLTA1LTA2KTCBmzAQBgcqhkjOPQIBBgUrgQQAIwOB
-			gYQABAGrU5fW3RreO8pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS
-			9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS9Z4pS
-			9Z4pS9Z4pS9Z4pS9Z4pSMCgYIKoZIzj0EAwIDgYsAMIGHAoGBAL9Z7v66EefG
-			79q8vE89uD8bIrf9v4bVvYp7v66EefG79q8vE89uD8bIrf9v4bVvYp7v66Ee
-			fG79q8vE89uD8bIrf9v4bVvYp7v66EefG79q8vE89uD8bIrf9v4bVvYp7v66
-			EefG79q8vE89uD8bIrf9v4bVvYp7v66EefG79q8vE89uD8bIrf9v4bVvYp7v
-			66EefG79q8vE89uA==
-			</data>
-		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>NextDNS Setup with School Wi-Fi Bypass and Certificate Integration.</string>
+	<string>NextDNS Setup with School Wi-Fi Bypass.</string>
 	<key>PayloadDisplayName</key>
 	<string>Stuple NextDNS (${decodeURIComponent(deviceName)})</string>
 	<key>PayloadIdentifier</key>
