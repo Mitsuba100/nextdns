@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextDNS Multi-Network Profile Generator</title>
+    <title>NextDNS Smart Profile Generator</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -90,13 +90,10 @@
 <body>
 
 <div class="card">
-    <h2>Profile Builder</h2>
-    <p>Generate a dual-network configuration profile for your iPad.</p>
+    <h2>Smart Profile Builder</h2>
+    <p>Forces static DNS on <b>GLAP-Schule</b> Wi-Fi, and automatically uses NextDNS DoH on all other networks.</p>
     
-    <div class="section-title">1. Other Wi-Fi (NextDNS DoH Setup)</div>
-    
-    <label for="otherSsid">Other Wi-Fi SSID (Name)</label>
-    <input type="text" id="otherSsid" value="">
+    <div class="section-title">1. NextDNS DoH (For Non-School Networks)</div>
 
     <label for="configId">NextDNS Configuration ID</label>
     <input type="text" id="configId" value="">
@@ -116,12 +113,12 @@
     <label for="dohIpv6_2">DoH IPv6 Secondary Address</label>
     <input type="text" id="dohIpv6_2" value="">
 
-    <div class="section-title">2. GLAP-Schule (Forced Static DNS)</div>
+    <div class="section-title">2. GLAP-Schule Wi-Fi (Bypass)</div>
 
-    <label for="schoolIpv4_1">GLAP-Schule Forced DNS 1</label>
+    <label for="schoolIpv4_1">Forced IPv4 DNS 1</label>
     <input type="text" id="schoolIpv4_1" value="">
 
-    <label for="schoolIpv4_2">GLAP-Schule Forced DNS 2</label>
+    <label for="schoolIpv4_2">Forced IPv4 DNS 2</label>
     <input type="text" id="schoolIpv4_2" value="">
 
     <button onclick="generateProfile()">Download Profile</button>
@@ -136,7 +133,6 @@ function generateUUID() {
 }
 
 function generateProfile() {
-    const otherSsid = document.getElementById('otherSsid').value.trim();
     const configId = document.getElementById('configId').value.trim();
     const deviceNameRaw = document.getElementById('deviceName').value.trim();
     const deviceName = encodeURIComponent(deviceNameRaw || "iPad");
@@ -149,11 +145,7 @@ function generateProfile() {
     const schoolIpv4_1 = document.getElementById('schoolIpv4_1').value.trim();
     const schoolIpv4_2 = document.getElementById('schoolIpv4_2').value.trim();
 
-    // Basic Validation
-    if (!otherSsid) {
-        alert("Please enter the name (SSID) of your Other Wi-Fi network.");
-        return;
-    }
+    // Validation
     if (!configId) {
         alert("Please enter your NextDNS Configuration ID.");
         return;
@@ -163,13 +155,12 @@ function generateProfile() {
         return;
     }
     if (!schoolIpv4_1 || !schoolIpv4_2) {
-        alert("Please enter both GLAP-Schule Forced DNS Addresses.");
+        alert("Please enter both school bypass IPv4 addresses.");
         return;
     }
 
     const dnsUuid = generateUUID();
     const schoolWifiUuid = generateUUID();
-    const generalWifiUuid = generateUUID();
     const mainUuid = generateUUID();
 
     const profileXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -247,32 +238,11 @@ function generateProfile() {
 				<string>${schoolIpv4_2}</string>
 			</array>
 		</dict>
-
-		<dict>
-			<key>PayloadType</key>
-			<string>com.apple.WiFi</string>
-			<key>PayloadVersion</key>
-			<integer>1</integer>
-			<key>PayloadUUID</key>
-			<string>${generalWifiUuid}</string>
-			<key>PayloadIdentifier</key>
-			<string>net.stuple.profile.wifigeneral</string>
-			<key>PayloadDisplayName</key>
-			<string>${otherSsid} Wi-Fi</string>
-			<key>SSID_STR</key>
-			<string>${otherSsid}</string>
-			<key>HIDDEN_NETWORK</key>
-			<false/>
-			<key>AutoJoin</key>
-			<true/>
-			<key>EncryptionType</key>
-			<string>WPA</string>
-		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>NextDNS Setup: Custom Wi-Fi Bypass config.</string>
+	<string>NextDNS dynamic network routing profile.</string>
 	<key>PayloadDisplayName</key>
-	<string>Stuple Multi-Network Config</string>
+	<string>Stuple Smart DNS Config</string>
 	<key>PayloadIdentifier</key>
 	<string>net.stuple.profile</string>
 	<key>PayloadOrganization</key>
@@ -293,7 +263,7 @@ function generateProfile() {
     const blob = new Blob([profileXml], { type: 'application/x-apple-aspen-config' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `MultiNetwork-NextDNS.mobileconfig`;
+    link.download = `SmartDNS-Config.mobileconfig`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
