@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextDNS Profile Generator</title>
+    <title>NextDNS Wi-Fi Profile Generator</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -82,26 +82,14 @@
 <body>
 
 <div class="card">
-    <h2>NextDNS Profile Builder</h2>
-    <p>Generate a custom Apple configuration profile bypassable on <b>GLAP-Schule</b> Wi-Fi.</p>
-    
-    <label for="configId">NextDNS Configuration ID</label>
-    <input type="text" id="configId" value="">
+    <h2>Wi-Fi DNS Profile Builder</h2>
+    <p>Configure <b>GLAP-Schule</b> Wi-Fi with forced static IPv4 DNS servers (No DoH/DoT).</p>
 
-    <label for="deviceName">Device Name</label>
-    <input type="text" id="deviceName" value="">
-
-    <label for="ipv4_1">IPv4 Primary Address</label>
+    <label for="ipv4_1">Forced IPv4 Primary DNS</label>
     <input type="text" id="ipv4_1" value="">
 
-    <label for="ipv4_2">IPv4 Secondary Address</label>
+    <label for="ipv4_2">Forced IPv4 Secondary DNS</label>
     <input type="text" id="ipv4_2" value="">
-
-    <label for="ipv6_1">IPv6 Primary Address</label>
-    <input type="text" id="ipv6_1" value="">
-
-    <label for="ipv6_2">IPv6 Secondary Address</label>
-    <input type="text" id="ipv6_2" value="">
 
     <button onclick="generateProfile()">Download Profile</button>
 </div>
@@ -115,24 +103,15 @@ function generateUUID() {
 }
 
 function generateProfile() {
-    const configId = document.getElementById('configId').value.trim();
-    const deviceNameRaw = document.getElementById('deviceName').value.trim();
-    const deviceName = encodeURIComponent(deviceNameRaw || "iPad");
     const ipv4_1 = document.getElementById('ipv4_1').value.trim();
     const ipv4_2 = document.getElementById('ipv4_2').value.trim();
-    const ipv6_1 = document.getElementById('ipv6_1').value.trim();
-    const ipv6_2 = document.getElementById('ipv6_2').value.trim();
 
-    if (!configId) {
-        alert("Please enter a Configuration ID.");
-        return;
-    }
     if (!ipv4_1 || !ipv4_2) {
         alert("Please enter both IPv4 Addresses.");
         return;
     }
 
-    const dnsUuid = generateUUID();
+    const wifiUuid = generateUUID();
     const mainUuid = generateUUID();
 
     const profileXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -143,50 +122,39 @@ function generateProfile() {
 	<array>
 		<dict>
 			<key>PayloadType</key>
-			<string>com.apple.dnsSettings.managed</string>
+			<string>com.apple.WiFi</string>
 			<key>PayloadVersion</key>
 			<integer>1</integer>
 			<key>PayloadUUID</key>
-			<string>${dnsUuid}</string>
+			<string>${wifiUuid}</string>
 			<key>PayloadIdentifier</key>
-			<string>net.stuple.profile.dns</string>
+			<string>net.stuple.profile.wifi</string>
 			<key>PayloadDisplayName</key>
-			<string>NextDNS Settings</string>
-			<key>DNSSettings</key>
-			<dict>
-				<key>DNSProtocol</key>
-				<string>HTTPS</string>
-				<key>ServerURL</key>
-				<string>https://apple.dns.nextdns.io/${configId}/${deviceName}</string>
-				<key>ServerAddresses</key>
-				<array>
-					<string>${ipv4_1}</string>
-					<string>${ipv4_2}</string>
-					${ipv6_1 ? `<string>${ipv6_1}</string>` : ''}
-					${ipv6_2 ? `<string>${ipv6_2}</string>` : ''}
-				</array>
-				<key>OnDemandRules</key>
-				<array>
-					<dict>
-						<key>Action</key>
-						<string>Disconnect</string>
-						<key>SSIDMatch</key>
-						<array>
-							<string>GLAP-Schule</string>
-						</array>
-					</dict>
-					<dict>
-						<key>Action</key>
-						<string>Connect</string>
-					</dict>
-				</array>
-			</dict>
+			<string>GLAP-Schule Wi-Fi Configuration</string>
+			
+			<key>SSID_STR</key>
+			<string>GLAP-Schule</string>
+			<key>HIDDEN_NETWORK</key>
+			<false/>
+			<key>AutoJoin</key>
+			<true/>
+			
+			<key>EncryptionType</key>
+			<string>WPA</string>
+			
+			<key>CaptiveBypass</key>
+			<false/>
+			<key>DNSNameservers</key>
+			<array>
+				<string>${ipv4_1}</string>
+				<string>${ipv4_2}</string>
+			</array>
 		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>NextDNS Setup with School Wi-Fi Bypass.</string>
+	<string>Configures GLAP-Schule Wi-Fi with forced static IPv4 DNS servers.</string>
 	<key>PayloadDisplayName</key>
-	<string>Stuple NextDNS (${decodeURIComponent(deviceName)})</string>
+	<string>Stuple Wi-Fi Config (Forced DNS)</string>
 	<key>PayloadIdentifier</key>
 	<string>net.stuple.profile</string>
 	<key>PayloadOrganization</key>
@@ -207,7 +175,7 @@ function generateProfile() {
     const blob = new Blob([profileXml], { type: 'application/x-apple-aspen-config' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `NextDNS-${decodeURIComponent(deviceName)}.mobileconfig`;
+    link.download = `WiFi-ForcedDNS.mobileconfig`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
